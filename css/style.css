@@ -1,0 +1,23 @@
+#drawpad {
+    /*width:280px;*/
+    /*height:280px;*/
+    margin-top: 20px;
+    /*margin:auto;*/
+    /*position: absolute;*/
+    background-color:#FFFFFF;
+    border:2px solid;
+}
+
+#output {
+    /*position: fixed;*/
+    font-size: 25px;
+}
+
+#reset {
+    position: absolute;
+}
+
+#evaluate {
+    margin-left: 70px;
+    position: relative;
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.4.1/math.min.js"></script>
+    <link href="css/starter-template.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">NumRecog</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="starter-template">
+        <h1>Neural Network Number Recognition</h1>
+        <hr>
+        <div class="container">
+            <p>Draw a number in the box below, then press the evaluate button</p>
+            <div id="bar">
+                <button id="reset" class="btn btn-outline-primary" onclick="clearCanvas()">reset</button>
+                <button id="evaluate" class="btn btn-primary" onclick="recognize()">evaluate</button>
+                <div id="input"></div>
+            </div>
+            <canvas id="drawpad" width="200" height="200"></canvas>
+            <div id="output">NeuNet says: write something!</div>
+        </div>
+
+
+
+        <script type="text/javascript" src="js/canvas.js"></script>
+        <script type="text/javascript" src="js/neural.js"></script>
+
+        <script type="text/javascript">
+
+            // This section was created with the help of http://myselph.de/neuralNet.html.
+            // training was done in Matlab with the MNIST dataset.
+            // this data is for a 784-200-10 unit, with logistic non-linearity in the hidden and softmax in the output layer.
+            // The input is a [-1;1] gray level image, background == 1, 28x28 pixels linearized in column order (i.e. column1(:); column2(:); ...)
+            // i-th output being the maximum means the network thinks the input encodes (i-1)
+            // the weights below showed a 1.92% error rate on the test data set (9808/10000 digits recognized correctly).
+            // neural net with one hidden layer; sigmoid for hidden, softmax for output
+            // take canvas image and convert to grayscale.
+
+            function imageDataToGrayscale(imgData) {
+                var grayscaleImg = [];
+                for (var y = 0; y < imgData.height; y++) {
+                    grayscaleImg[y]=[];
+                    for (var x = 0; x < imgData.width; x++) {
+                        var offset = y * 4 * imgData.width + 4 * x;
+                        var alpha = imgData.data[offset+3];
+                        if (alpha == 0) {
+                            imgData.data[offset] = 255;
+                            imgData.data[offset+1] = 255;
+                            imgData.data[offset+2] = 255;
+                        }
+                        imgData.data[offset+3] = 255;
+                        // simply take red channel value. Not correct, but works for
+                        // black or white images.
+                        grayscaleImg[y][x] = imgData.data[y*4*imgData.width + x*4] / 255;
+                    }
+                }
+                return grayscaleImg;
+            }
+
+            // takes the image in the canvas, centers & resizes it, then puts into 10x10 px bins
+            // to give a 28x28 grayscale image; then, computes class probability via neural network
+            function recognize() {
+
+
+                //Copy 200x200 canvas from user and center on 280x280 canvas
+                //so that there is 40px of whitespace padding. This helps the
+                //Neural Network recognize the number better.
+
+                var copyCan = document.createElement("canvas");
+                copyCan.width = copyCan.height  = 280;
+                var copyCtx = copyCan.getContext("2d");
+                copyCtx.drawImage(document.getElementById('drawpad'),40,40);
+
+
+
+                var imgData = copyCtx.getImageData(0, 0, 280, 280);
+                var grayscaleImg = imageDataToGrayscale(imgData);
+                var inputArr = new Array(784);
+                for (var y = 0; y < 28; y++) {
+                    for (var x = 0; x < 28; x++) {
+                        var mean = 0;
+                        for (var v = 0; v < 10; v++) {
+                            for (var h = 0; h < 10; h++) {
+                                mean += grayscaleImg[y*10 + v][x*10 + h];
+                            }
+                        }
+                        mean = (1 - mean / 100); // average and invert
+                        inputArr[x*28+y] = (mean - .5) / .5;
+                    }
+                }
+
+                var net = new Network();
+                document.getElementById('output').innerHTML="NeuNet says: <b>" + net.evaluate(inputArr).toString() +"</b>";
+            }
+
+        </script>
+    </div>
+
+</div><!-- /.container -->
+</body>
+<footer>
+    <div class="container">
+        <p class="text-muted">Copyright &copy; Rachael Johnson 2016</p>
+    </div>
+</footer>
+</html>
